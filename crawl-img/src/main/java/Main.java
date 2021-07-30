@@ -16,10 +16,57 @@ public class Main {
         String dir = "D:\\IMG\\";
         String domain = "https://sonrau.vn/customer-work/";
         String domain2 = "https://sonrau.vn/personal-work/";
+        String pattern = "https://sonrau.vn/gallery";
 
+        String browserVersion = "93.0.4577.15";
+        String binary = "C:\\Program Files\\Google\\Chrome Dev\\Application\\chrome.exe";
+
+        WebDriver driver = configWebDriver(browserVersion, binary);
+
+        driver.get(domain);
+        Document documentGallery = Jsoup.parse(driver.getPageSource());
+        ArrayList<String> listOfURLs = getURLs(documentGallery, pattern);
+        System.out.println("\nGet URLs gallery done!\n");
+
+        for (int i = 0; i < listOfURLs.size(); i++) {
+            System.out.println("INDEX    : " + i);
+            System.out.println("FOLDER ID: " + "[" + createFolderId(i + 1) + "]");
+
+            String url = listOfURLs.get(i);
+            ArrayList<String> imgURLs = new ArrayList<>();
+            System.out.println("Start getting a list src IMG: [" + url + "]");
+            try {
+                driver.get(url);
+                Document documentImg = Jsoup.parse(driver.getPageSource());
+                imgURLs = getImgURLs(documentImg, "fs_slide", "data-src");
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            System.out.println("Get the list of src IMG done!\n");
+
+            String[] temp = url.split("/");
+            String folderName = "[" + createFolderId(i + 1) + "] " + temp[temp.length - 1];
+
+            String patch = dir + folderName;
+            File theDir = new File(patch);
+            boolean isCreated = theDir.mkdirs();
+            if (isCreated) {
+                System.out.println("Create patch: [" + patch + "] done!");
+                System.out.println("Images will be saved in the folder: [" + folderName + "]\n");
+
+                downloadImages(imgURLs, patch);
+            } else {
+                System.out.println("Can't create patch: [" + patch + "] done!");
+            }
+        }
+        driver.close();
+        driver.quit();
+    }
+
+    private static WebDriver configWebDriver(String browserVersion, String binary) {
         // https://chromedriver.storage.googleapis.com/index.html
         // Setup ChromeDriver
-        WebDriverManager.chromedriver().browserVersion("93.0.4577.15").setup();
+        WebDriverManager.chromedriver().browserVersion(browserVersion).setup();
         ChromeOptions options = new ChromeOptions();
         options.addArguments("--headless");
         options.addArguments("start-maximized");
@@ -29,85 +76,48 @@ public class Main {
         options.addArguments("--disable-dev-shm-usage");
         options.addArguments("--disable-browser-side-navigation");
         options.addArguments("--disable-gpu");
-        options.setBinary("C:\\Program Files\\Google\\Chrome Dev\\Application\\chrome.exe");
-        WebDriver driver = new ChromeDriver(options);
-
-        driver.get(domain);
-        Document documentGallery = Jsoup.parse(driver.getPageSource());
-        ArrayList<String> listSrc = listUrl(documentGallery);
-        System.out.println("\nGet list src gallery done!\n");
-
-        for(int i = 0; i < listSrc.size(); i++) {
-            System.out.println("INDEX:  " + i);
-            System.out.println("FOLDER: " + "[" + folderId(i + 1) + "]");
-            String strUrl = listSrc.get(i);
-            System.out.println("Start get list src IMG: [" + strUrl + "]");
-
-            ArrayList<String> listSrcImg = new ArrayList<>();
-            try {
-                driver.get(strUrl);
-                Document documentImg = Jsoup.parse(driver.getPageSource());
-                listSrcImg = listUrlImg(documentImg);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            System.out.println("Get list src IMG done!\n");
-
-            String temp[] = strUrl.split("/");
-            String folder =  dir + "[" + folderId(i + 1) + "] " + temp[temp.length - 1];
-            File theDir = new File(folder);
-            theDir.mkdirs();
-            System.out.println("Create patch: [" + folder + "] done!");
-            System.out.println("Images will be saved in the folder: [" + "[" + folderId(i + 1) + "] " + temp[temp.length - 1] + "]\n");
-
-            int count = 0;
-            System.out.println("Start download image...");
-            for (String src : listSrcImg) {
-                saveImg(src, getImgName(src), folder);
-                ++count;
-            }
-            System.out.println("Download " + count + " images done!\n");
-        }
-        driver.close();
-        driver.quit();
+        options.setBinary(binary);
+        return new ChromeDriver(options);
     }
 
-    private static String getImgName(String url) {
-        String str[] = url.toLowerCase().split("/");
-        for (int i = 0; i < str.length; i++) {
-            if(str[i].endsWith("jpg")) {
-                return str[i].toUpperCase();
-            }
-        }
-        return null;
-    }
-
-    private static ArrayList<String> listUrl(Document document) {
+    private static ArrayList<String> getURLs(Document document, String pattern) {
         Elements elms = document.select("a[href]");
-        ArrayList<String> listUrl = new ArrayList<>();
+        ArrayList<String> listOfURLs = new ArrayList<>();
         for (int i = 0; i < elms.size(); i++) {
             String url = elms.get(i).absUrl("href");
             if (url.equals("")) {
                 continue;
             }
-            if (url.contains("https://sonrau.vn/gallery")) {
-                listUrl.add(url);
+
+            // filters increase accuracy
+            if (url.contains(pattern)) {
+                listOfURLs.add(url);
             }
         }
-        return listUrl;
+        return listOfURLs;
     }
 
-    private static ArrayList<String> listUrlImg(Document document) throws IOException {
-        Elements elms = document.getElementsByClass("fs_slide");
-        ArrayList<String> listUrl = new ArrayList<>();
+    private static ArrayList<String> getImgURLs(Document document, String className, String attr) {
+        Elements elms = document.getElementsByClass(className);
+        ArrayList<String> listOfURLs = new ArrayList<>();
         for (int i = 0; i < elms.size(); i++) {
-            String url = elms.get(i).absUrl("data-src");
+            String url = elms.get(i).absUrl(attr);
             if (url.equals("")) {
                 continue;
             }
-            listUrl.add(url);
+            listOfURLs.add(url);
         }
-        return listUrl;
+        return listOfURLs;
+    }
+
+    private static String getImgName(String url) {
+        String[] str = url.toLowerCase().split("/");
+        for (int i = 0; i < str.length; i++) {
+            if (str[i].endsWith("jpg")) {
+                return str[i].toUpperCase();
+            }
+        }
+        return null;
     }
 
     private static void saveImg(String srcImage, String name, String dir) {
@@ -115,7 +125,7 @@ public class Main {
             URL url = new URL(srcImage);
             InputStream in = url.openStream();
             OutputStream out = new BufferedOutputStream(new FileOutputStream(dir + "\\" + name));
-            for (int b; (b = in.read()) != -1;) {
+            for (int b; (b = in.read()) != -1; ) {
                 out.write(b);
             }
             out.close();
@@ -126,14 +136,24 @@ public class Main {
         }
     }
 
-    private static String folderId(int n) {
-        String strId = "" + n;
-        int length = 3 - strId.length();
+    private static void downloadImages(ArrayList<String> imgURLs, String patch) {
+        int count = 0;
+        System.out.println("Start download image...");
+        for (String src : imgURLs) {
+            saveImg(src, getImgName(src), patch);
+            ++count;
+        }
+        System.out.println("Download " + count + " images done!\n");
+    }
+
+    private static String createFolderId(int n) {
+        String str = "" + n;
+        int length = 3 - str.length();
 
         while (length > 0) {
-            strId = "0" + strId;
+            str = "0" + str;
             --length;
         }
-        return strId;
+        return str;
     }
 }
