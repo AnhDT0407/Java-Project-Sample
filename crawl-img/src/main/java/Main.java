@@ -32,16 +32,16 @@ public class Main {
         options.setBinary("C:\\Program Files\\Google\\Chrome Dev\\Application\\chrome.exe");
         WebDriver driver = new ChromeDriver(options);
 
-        driver.get(domain2);
+        driver.get(domain);
         Document documentGallery = Jsoup.parse(driver.getPageSource());
         ArrayList<String> listSrc = listUrl(documentGallery);
-        System.out.println("Get list src gallery done!\n");
+        System.out.println("\nGet list src gallery done!\n");
 
         for(int i = 0; i < listSrc.size(); i++) {
             System.out.println("INDEX:  " + i);
-            System.out.println("FOLDER: " + (i + 1));
+            System.out.println("FOLDER: " + "[" + folderId(i + 1) + "]");
             String strUrl = listSrc.get(i);
-            System.out.println("Start get list URL: [" + strUrl + "]");
+            System.out.println("Start get list src IMG: [" + strUrl + "]");
 
             ArrayList<String> listSrcImg = new ArrayList<>();
             try {
@@ -51,15 +51,17 @@ public class Main {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            System.out.println("Get list src   IMG: [" + strUrl + "] done!");
+            System.out.println("Get list src IMG done!\n");
 
             String temp[] = strUrl.split("/");
             String folder =  dir + "[" + folderId(i + 1) + "] " + temp[temp.length - 1];
             File theDir = new File(folder);
             theDir.mkdirs();
-            System.out.println("Create folder [" + folder + "] done!");
+            System.out.println("Create patch: [" + folder + "] done!");
+            System.out.println("Images will be saved in the folder: [" + "[" + folderId(i + 1) + "] " + temp[temp.length - 1] + "]\n");
 
             int count = 0;
+            System.out.println("Start download image...");
             for (String src : listSrcImg) {
                 saveImg(src, getImgName(src), folder);
                 ++count;
