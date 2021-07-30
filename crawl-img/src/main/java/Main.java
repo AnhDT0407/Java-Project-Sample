@@ -12,7 +12,7 @@ import java.util.ArrayList;
 
 public class Main {
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         String dir = "D:\\IMG\\";
         String domain = "https://sonrau.vn/customer-work/";
         String domain2 = "https://sonrau.vn/personal-work/";
@@ -80,7 +80,7 @@ public class Main {
         return null;
     }
 
-    private static ArrayList<String> listUrl(Document document) throws IOException {
+    private static ArrayList<String> listUrl(Document document) {
         Elements elms = document.select("a[href]");
         ArrayList<String> listUrl = new ArrayList<>();
         for (int i = 0; i < elms.size(); i++) {
