@@ -15,8 +15,7 @@ public class Main {
 
     public static void main(String[] args) {
         String dir = "D:\\IMG\\";
-        String domain = "https://sonrau.vn/customer-work/";
-        String domain2 = "https://sonrau.vn/personal-work/";
+        String domain = "https://sonrau.vn/";
         String pattern = "https://sonrau.vn/gallery";
 
         // https://chromedriver.storage.googleapis.com/index.html
@@ -28,52 +27,39 @@ public class Main {
 
         WebDriver driver = configWebDriver(browserVersion, binary);
 
-        driver.get(domain);
-        Document documentGallery = Jsoup.parse(driver.getPageSource());
-        ArrayList<String> listOfURLs = getURLs(documentGallery, pattern);
-        System.out.println("\nGet URLs gallery done!\n");
+        ArrayList<String> imgURLs = new ArrayList<>();
+        System.out.println("\nStart getting a list src IMG: [" + domain + "]");
+        try {
+            driver.get(domain);
+            Document documentImg = Jsoup.parse(driver.getPageSource());
+            imgURLs = getImgURLs(documentImg, "fs_slide", "data-src");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        System.out.println("Get the list of src IMG done!\n");
 
-        for (int i = 0; i < listOfURLs.size(); i++) {
-            System.out.println("INDEX    : " + i);
-            System.out.println("FOLDER ID: " + "[" + createFolderId(i + 1) + "]");
+        String folderName = "Home";
+        String patch = dir + folderName;
+        File theDir = new File(patch);
+        if (theDir.isDirectory()) {
+            System.out.println("Directory already exists!");
 
-            String url = listOfURLs.get(i);
-            ArrayList<String> imgURLs = new ArrayList<>();
-            System.out.println("Start getting a list src IMG: [" + url + "]");
-            try {
-                driver.get(url);
-                Document documentImg = Jsoup.parse(driver.getPageSource());
-                imgURLs = getImgURLs(documentImg, "fs_slide", "data-src");
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            System.out.println("Get the list of src IMG done!\n");
+            //Maybe remove folder
+            //FileUtils.deleteDirectory(file);
 
-            String[] temp = url.split("/");
-            String folderName = "[" + createFolderId(i + 1) + "] " + temp[temp.length - 1];
+            //Create new folder copy
+            System.out.println("Create new folder copy...\n");
+            patch += " - " + System.currentTimeMillis();
+            theDir = new File(patch);
+        }
 
-            String patch = dir + folderName;
-            File theDir = new File(patch);
-            if (theDir.isDirectory()) {
-                System.out.println("Directory already exists!");
-
-                //Maybe remove folder
-                //FileUtils.deleteDirectory(file);
-
-                //Create new folder copy
-                System.out.println("Create new folder copy...\n");
-                patch += " - " + System.currentTimeMillis();
-                theDir = new File(patch);
-            }
-
-            boolean isCreated = theDir.mkdirs();
-            if (isCreated) {
-                System.out.println("Create patch: [" + patch + "] done!");
-                System.out.println("Images will be saved in the folder: [" + folderName + "]\n");
-                downloadImages(imgURLs, patch);
-            } else {
-                System.out.println("Can't create patch: [" + patch + "] done!");
-            }
+        boolean isCreated = theDir.mkdirs();
+        if (isCreated) {
+            System.out.println("Create patch: [" + patch + "] done!");
+            System.out.println("Images will be saved in the folder: [" + folderName + "]\n");
+            downloadImages(imgURLs, patch);
+        } else {
+            System.out.println("Can't create patch: [" + patch + "] done!");
         }
         driver.close();
         driver.quit();
