@@ -1,4 +1,5 @@
 import io.github.bonigarcia.wdm.WebDriverManager;
+import org.apache.commons.io.FileUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
@@ -53,11 +54,22 @@ public class Main {
 
             String patch = dir + folderName;
             File theDir = new File(patch);
+            if (theDir.isDirectory()) {
+                System.out.println("Directory already exists!");
+
+                //Maybe remove folder
+                //FileUtils.deleteDirectory(file);
+
+                //Create new folder copy
+                System.out.println("Create new folder copy...\n");
+                patch += " - " + System.currentTimeMillis();
+                theDir = new File(patch);
+            }
+
             boolean isCreated = theDir.mkdirs();
             if (isCreated) {
                 System.out.println("Create patch: [" + patch + "] done!");
                 System.out.println("Images will be saved in the folder: [" + folderName + "]\n");
-
                 downloadImages(imgURLs, patch);
             } else {
                 System.out.println("Can't create patch: [" + patch + "] done!");
@@ -117,18 +129,19 @@ public class Main {
     private static String getImgName(String url) {
         String[] str = url.toLowerCase().split("/");
         for (int i = 0; i < str.length; i++) {
-            if (str[i].endsWith("jpg")) {
+            if (str[i].endsWith("jpg") || str[i].endsWith("png")) {
                 return str[i].toUpperCase();
             }
         }
         return null;
     }
 
-    private static void saveImg(String srcImage, String name, String dir) {
+    // Java IO
+    private static void saveImg(String srcImage, String name, String patch) {
         try {
             URL url = new URL(srcImage);
             InputStream in = url.openStream();
-            OutputStream out = new BufferedOutputStream(new FileOutputStream(dir + "\\" + name));
+            OutputStream out = new BufferedOutputStream(new FileOutputStream(patch + "\\" + name));
             for (int b; (b = in.read()) != -1; ) {
                 out.write(b);
             }
@@ -140,11 +153,24 @@ public class Main {
         }
     }
 
+    // Apache Common IO
+    private static void saveImgCommonIO(String srcImage, String name, String patch) {
+        try {
+            FileUtils.copyURLToFile(
+                    new URL(srcImage),
+                    new File(patch + "\\" + name)
+            );
+            System.out.println("Download image: [" + name + "] successfully!");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     private static void downloadImages(ArrayList<String> imgURLs, String patch) {
         int count = 0;
         System.out.println("Start download image...");
         for (String src : imgURLs) {
-            saveImg(src, getImgName(src), patch);
+            saveImgCommonIO(src, getImgName(src), patch);
             ++count;
         }
         System.out.println("Download " + count + " images done!\n");
