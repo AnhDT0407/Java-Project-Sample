@@ -20,6 +20,12 @@ public class Main {
 
         String browserVersion = "93.0.4577.15";
         String binary = "C:\\Program Files\\Google\\Chrome Dev\\Application\\chrome.exe";
+        // https://chromedriver.storage.googleapis.com/index.html
+        String browserVersion = "92.0.4515.107";
+        String binary = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
+
+        String browserVersionDev = "93.0.4577.15";
+        String binaryDev = "C:\\Program Files\\Google\\Chrome Dev\\Application\\chrome.exe";
 
         WebDriver driver = configWebDriver(browserVersion, binary);
 
