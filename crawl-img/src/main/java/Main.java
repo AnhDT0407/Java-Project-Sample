@@ -18,8 +18,6 @@ public class Main {
         String domain2 = "https://sonrau.vn/personal-work/";
         String pattern = "https://sonrau.vn/gallery";
 
-        String browserVersion = "93.0.4577.15";
-        String binary = "C:\\Program Files\\Google\\Chrome Dev\\Application\\chrome.exe";
         // https://chromedriver.storage.googleapis.com/index.html
         String browserVersion = "92.0.4515.107";
         String binary = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
